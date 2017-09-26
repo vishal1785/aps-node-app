@@ -4,7 +4,8 @@ var pg = require('pg');
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
-    pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+    var pool = new pg.Pool();
+    pool.connect(process.env.DATABASE_URL, function(err, client, done) {
     client.query('SELECT * FROM test_table', function(err, result) {
       done();
       if (err)
@@ -13,6 +14,7 @@ router.get('/', function(req, res, next) {
        { response.render('db', {results: result.rows} ); }
     });
   });
+  pool.end();
 });
 
 module.exports = router;
