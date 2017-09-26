@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  
+  <body>
+  
+  <h3>Welcome to Unicef</h3>
+
+  <form action="/sendsms" method="post">
+  Please enter number to send sms :<br><br>
+  <input type="text" name="number" placeholder="9556553550" maxlength="10"><br><br>
+  Messsage :<br>
+  <textarea rows="4" cols="50" name="message" placeholder="Type your message here..."></textarea><br><br>
+
+  <input type="submit" value="Send">
+  </form>
+
+  <% if (isSMSSent === 'true') { %>
+    <script language="javascript">
+      alert("Message sent successfully");
+    </script>
+  <% } %>
+  
+  </body>
+</html>
