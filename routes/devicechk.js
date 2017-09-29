@@ -1,20 +1,69 @@
-var express = require('express');
-var router = express.Router();
-var pg = require('pg');
+let express = require('express');
+let router = express.Router();
+const fs = require('fs');
+let updater = require('jsonfile-updater');
+let Q = require('q');
+let fileName = 'codes.json';
 
-/* GET users listing. */
-router.get('/', function(req, res, next) {
-    var pool = new pg.Pool();
-    pool.connect(process.env.DATABASE_URL, function(err, client, done) {
-    client.query('SELECT * FROM test_table', function(err, result) {
-      done();
-      if (err)
-       { console.error(err); response.send("Error " + err); }
-      else
-       { response.render('db', {results: result.rows} ); }
-    });
-  });
-  pool.end();
+router.get('/:code', function(req, res, next) {
+    
+    let receivedCode = req.params.code;
+    let doesCodeExists = false;
+    let pkg = getParsedPackage();
+    let keys = Object.keys(pkg);
+    for (var i = 0; i < keys.length; i++) {
+       if(receivedCode === pkg[keys[i]]){
+            console.log('code found in file');
+            doesCodeExists = true;
+            removeCodeFromList(keys[i])
+            .then(isDeleted => getResult(isDeleted))
+            .then(result => res.send(JSON.stringify({data : result})))
+            .catch(exception => res.send(JSON.stringify({data : populateError("ERROR",exception)})))
+            .done();
+       }
+    }
+    if(!doesCodeExists){
+        res.send(JSON.stringify({data : populateError("ERROR","Code Not Found")}));
+    }
 });
+
+function removeCodeFromList(code){
+    let deffered = Q.defer();
+    console.log('removing code - ' + code);
+    updater(fileName).delete(code, function(err) {
+        if (err) {
+            console.log('ERROR: ' + JSON.stringify(err));
+            deffered.reject(err);
+        }
+        deffered.resolve(true);
+    });
+    return deffered.promise;
+}
+
+function getParsedPackage() {
+    return JSON.parse(fs.readFileSync(fileName))
+}
+
+function getResult(isDeleted){
+    let deffered = Q.defer();
+    let data = populateData("SUCCESS", isDeleted);
+    deffered.resolve(data);
+    return deffered.promise;
+    //return populateData("SUCCESS", isDeleted);
+}
+
+function populateData(status,isDeleted){
+    return {
+        "status":status,
+        "code-exists":isDeleted
+    };
+}
+
+function populateError(status,err){
+    return {
+        "status":status,
+        "error":err
+    };
+}
 
 module.exports = router;
